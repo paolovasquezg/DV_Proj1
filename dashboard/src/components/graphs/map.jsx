@@ -1,6 +1,6 @@
-import { mapShapes, polygonPath } from "../utils/mapShapes"
-import { NEIGHBOURHOOD_NAMES } from "../utils/constants"
-import { statusColor, vsupColor } from "../utils/vsup"
+import { mapShapes, polygonPath } from "../../utils/mapShapes"
+import { NEIGHBOURHOOD_NAMES } from "../../utils/constants"
+import { statusColor, vsupColor } from "../../utils/vsup"
 
 export default function ChoroplethMap({ rows, selectedLocation, setSelectedLocation, fillMap, showNames }) {
   const width = 610

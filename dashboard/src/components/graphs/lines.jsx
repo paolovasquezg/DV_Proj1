@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import * as d3 from "d3"
-import { CATEGORY_LABELS, CATEGORY_ORDER } from "../utils/constants"
-import { vsupColor } from "../utils/vsup"
+import { CATEGORY_LABELS, CATEGORY_ORDER } from "../../utils/constants"
+import { vsupColor } from "../../utils/vsup"
 
 function clampRating(value) {
   if (!Number.isFinite(value)) return 0

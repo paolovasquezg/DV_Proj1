@@ -1,4 +1,4 @@
-import { NEIGHBOURHOOD_NAMES } from "../utils/constants"
+import { NEIGHBOURHOOD_NAMES } from "../../utils/constants"
 
 export default function Controls({
   locations,

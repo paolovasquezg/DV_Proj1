@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import * as d3 from "d3"
-import { NEIGHBOURHOOD_NAMES } from "../utils/constants"
-import { statusColor, vsupColor } from "../utils/vsup"
+import { NEIGHBOURHOOD_NAMES } from "../../utils/constants"
+import { statusColor, vsupColor } from "../../utils/vsup"
 
 export default function ErrorBarChart({ rows, selectedLocation, setSelectedLocation, sortMode }) {
   const width = 650

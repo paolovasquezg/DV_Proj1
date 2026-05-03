@@ -1,5 +1,5 @@
 import * as d3 from "d3"
-import { vsupColor } from "../utils/vsup"
+import { vsupColor } from "../../utils/vsup"
 
 const toRad = (deg) => (deg * Math.PI) / 180
 
