@@ -1,147 +1,115 @@
 import { useEffect, useMemo, useState } from "react"
-import { loadMc1Excel } from "../utils/excel"
-import { CATEGORY_LABELS, CATEGORY_ORDER, LOCATIONS, NEIGHBOURHOOD_NAMES } from "../utils/constants"
-import { getCategories, getTimes, latestRowsFor } from "../utils/selectors"
-import Controls from "./others/controls"
-import Timeline from "../others/timeline"
-import ErrorBarChart from "./graphs/barchart"
-import ChoroplethMap from "./graphs/map"
+import { load_excel } from "../utils/excel"
+
+import { LABELS, ORDER, LOCATIONS } from "../utils/constants"
+import { GetTimes, GetLatestRegs } from "../utils/selectors"
+
+import BarChart from "./graphs/barchart"
+import MainMap from "./graphs/map"
 import HeatMap from "./graphs/heatmap"
-import LineCharts from "./graphs/lines"
-import VSUPLegend from "./others/legend"
+import Lines from "./graphs/lines"
+
+import Timeline from "./others/Timeline"
+import Controls from "./others/controls"
+import Legend from "./others/legend"
 
 export default function Dashboard() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedTimeIndex, setSelectedTimeIndex] = useState(0)
-  const [selectedCategory, setSelectedCategory] = useState("shake_intensity")
-  const [selectedLocation, setSelectedLocation] = useState(4)
-  const [sortMode, setSortMode] = useState("ci95")
+
+  const [TimeIndex, setTimeIndex] = useState(0)
+  const [Location, setLocation] = useState(1)
+
+  const [sort, setSort] = useState("ci95")
+  const [Category, setCategory] = useState("shake_intensity")
+
   const [fillMap, setFillMap] = useState(true)
   const [showNames, setShowNames] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [palette, setPalette] = useState("vsup")
+  const [Play, setPlay] = useState(false)
 
-  useEffect(() => {
-    loadMc1Excel()
-      .then((rows) => { setData(rows); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [])
+  const times = useMemo(() => GetTimes(data), [data])
+  const Time = times[TimeIndex]
+  const Regs = useMemo(() => { return GetLatestRegs(data, Category, Time) }, [data, Category, Time])
 
-  const times = useMemo(() => getTimes(data), [data])
-  const categories = useMemo(() => getCategories(data), [data])
+  useEffect(() => { load_excel().then((rows) => { setData(rows); setLoading(false) }).catch(() => setLoading(false)) }, [])
+  useEffect(() => { if (times.length > 0 && TimeIndex === 0) setTimeIndex(Math.floor(times.length * 0.65)) }, [times, TimeIndex])
 
-  useEffect(() => {
-    if (times.length > 0 && selectedTimeIndex === 0)
-      setSelectedTimeIndex(Math.floor(times.length * 0.65))
-  }, [times, selectedTimeIndex])
-
-  useEffect(() => {
-    if (categories.length > 0 && !categories.includes(selectedCategory))
-      setSelectedCategory(categories[0])
-  }, [categories, selectedCategory])
-
-  const selectedTime = times[selectedTimeIndex]
-
-  const currentRows = useMemo(() => {
-    if (!selectedTime) return []
-    return latestRowsFor(data, selectedCategory, selectedTime)
-  }, [data, selectedCategory, selectedTime])
-
-  if (loading) return <div className="p-10 text-center text-sm text-gray-500">Loading MC1 dashboard...</div>
+  if (loading) return <div className="p-10 text-center text-sm text-gray-500">Loading dashboard...</div>
   if (!data.length) return <div className="p-10 text-center text-sm text-gray-500">No data loaded.</div>
-
-  const orderedCategories = CATEGORY_ORDER.filter((c) => categories.includes(c))
 
   return (
     <div className="max-w-[1380px] mx-auto px-5 py-4">
-
-      {/* ── Top: map (left) + category buttons + error bar chart (right) ── */}
       <div className="grid gap-3 mb-2.5 items-start" style={{ gridTemplateColumns: "minmax(480px, 540px) 1fr" }}>
         <section className="flex items-center justify-center">
-          <ChoroplethMap
-            rows={currentRows}
-            selectedLocation={selectedLocation}
-            setSelectedLocation={setSelectedLocation}
+          <MainMap
+            Regs={Regs}
+            Location={Location}
+            setLocation={setLocation}
             fillMap={fillMap}
-            showNames={showNames}
-          />
+            showNames={showNames} />
         </section>
 
         <div className="flex flex-col gap-2">
           <div className="grid grid-cols-3 gap-1.5">
-            {orderedCategories.map((cat) => (
+            {ORDER.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`h-8 border rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap ${selectedCategory === cat
-                  ? "bg-sky-400 border-sky-400 text-white"
-                  : "bg-white border-gray-300 text-slate-600 hover:bg-slate-50"
-                  }`}
-              >
-                {CATEGORY_LABELS[cat]}
+                onClick={() => setCategory(cat)}
+                className={`h-8 border rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap 
+                  ${Category === cat ? "bg-sky-400 border-sky-400 text-white" : "bg-white border-gray-300 text-slate-600 hover:bg-slate-50"}`}>
+                {LABELS[cat]}
               </button>
             ))}
           </div>
-          <ErrorBarChart
-            rows={currentRows}
-            selectedLocation={selectedLocation}
-            setSelectedLocation={setSelectedLocation}
-            sortMode={sortMode}
-          />
+          <BarChart
+            regs={Regs}
+            Location={Location}
+            setLocation={setLocation}
+            sort={sort} />
         </div>
       </div>
 
-      {/* ── Timeline ── */}
       <Timeline
         times={times}
-        selectedTimeIndex={selectedTimeIndex}
-        setSelectedTimeIndex={setSelectedTimeIndex}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-      />
+        TimeIndex={TimeIndex}
+        setTimeIndex={setTimeIndex}
+        Play={Play} />
 
-      {/* ── Controls ── */}
       <Controls
         locations={LOCATIONS}
-        selectedLocation={selectedLocation}
-        setSelectedLocation={setSelectedLocation}
-        sortMode={sortMode}
-        setSortMode={setSortMode}
+        Location={Location}
+        setLocation={setLocation}
+        sort={sort}
+        setSort={setSort}
         fillMap={fillMap}
         setFillMap={setFillMap}
         showNames={showNames}
         setShowNames={setShowNames}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-        palette={palette}
-        setPalette={setPalette}
-      />
+        Play={Play}
+        setPlay={setPlay} />
 
-      {/* ── Bottom: heatmap + linecharts (left) | vsup legend (right) ── */}
+
       <div className="grid gap-3 items-start" style={{ gridTemplateColumns: "3fr 2fr" }}>
 
         <div className="flex flex-col gap-3">
           <HeatMap
             data={data}
-            selectedLocation={selectedLocation}
-            selectedTime={selectedTime}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-          />
+            Location={Location}
+            Time={Time}
+            Category={Category}
+            setCategory={setCategory} />
 
           <div className="overflow-y-auto max-h-[300px]">
-            <LineCharts
+            <Lines
               data={data}
-              selectedLocation={selectedLocation}
-              selectedTime={selectedTime}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-            />
+              Location={Location}
+              Time={Time}
+              Category={Category}
+              setCategory={setCategory} />
           </div>
         </div>
 
-        <VSUPLegend />
+        <Legend />
 
       </div>
 

@@ -1,13 +1,15 @@
 import * as d3 from "d3"
-import { vsupColor } from "../../utils/vsup"
+import { GetColor } from "../../utils/vsup"
 
-const toRad = (deg) => (deg * Math.PI) / 180
+export default function Legend() {
 
-export default function VSUPLegend() {
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const pt = (r, deg) => ({ x: cx + r * Math.sin(toRad(deg)), y: cy - r * Math.cos(toRad(deg)) })
+
   const width = 300
   const height = 480
   const cx = 140
-  const cy = 160
+  const cy = 172
 
   const innerRadius = 0
   const ringSize = 28
@@ -15,59 +17,35 @@ export default function VSUPLegend() {
   const outerRadius = innerRadius + numTiers * ringSize
   const arc = d3.arc()
 
-  const cirTiers = [
-    { cir: 10 },
-    { cir: 7.5 },
-    { cir: 3.75 },
-    { cir: 1.25 },
-  ]
-
   const angleDeg = d3.scaleLinear().domain([0, 10]).range([-60, 60])
 
-  const pt = (r, deg) => ({
-    x: cx + r * Math.sin(toRad(deg)),
-    y: cy - r * Math.cos(toRad(deg)),
-  })
+  const Tiers = [{ cir: 10 }, { cir: 7.5 }, { cir: 3.75 }, { cir: 1.25 }]
 
-  const ratingTicks = [0, 1.25, 2.5, 3.75, 5, 6.25, 7.5, 8.75, 10]
+  const RatingTicks = [0, 2.5, 5, 7.5, 10]
 
-  const cirBoundaries = [
-    { r: outerRadius, label: "0" },
-    { r: innerRadius + ringSize * 3, label: "2.5" },
-    { r: innerRadius + ringSize * 2, label: "5" },
-    { r: innerRadius + ringSize, label: "7.5" },
-    { r: innerRadius, label: "10" },
-  ]
+  const CirBoundaries = [{ r: outerRadius, label: "0" }, { r: innerRadius + ringSize * 3, label: "2.5" },
+  { r: innerRadius + ringSize * 2, label: "5" }, { r: innerRadius + ringSize, label: "7.5" },
+  { r: innerRadius, label: "10" }]
 
   const cirLabelAngle = 60
+  const midR = (innerRadius + outerRadius) / 2
 
-  // Legend items below the fan
   const legendY = cy + 60
   const swatchSize = 10
-  const legendItems = [
-    {
-      color: vsupColor(8.5, 1.25),
-      label: "High rating, low uncertainty",
-    },
-    {
-      color: vsupColor(1.5, 1.25),
-      label: "Low rating, low uncertainty",
-    },
-    {
-      color: vsupColor(5, 10),
-      label: "High uncertainty",
-    },
-  ]
+
+  const LegendItems = [
+    { color: GetColor(8.5, 1.25), label: "High rating, low uncertainty" },
+    { color: GetColor(5, 10), label: "High uncertainty" },
+    { color: GetColor(1.5, 1.25), label: "Low rating, low uncertainty" }]
 
   return (
     <svg className="w-full max-w-md block" viewBox={`0 0 ${width} ${height}`}>
-      {/* Rating label */}
+
       <text x={cx} y={cy - outerRadius - 28} textAnchor="middle" fontSize="11" fontWeight="600" fill="#333">
         Rating
       </text>
 
-      {/* Fan cells */}
-      {cirTiers.flatMap((tier, ti) =>
+      {Tiers.flatMap((tier, ti) =>
         d3.range(0, 10).map((r) => {
           const r0 = innerRadius + ti * ringSize
           const r1 = r0 + ringSize - 1
@@ -78,7 +56,7 @@ export default function VSUPLegend() {
               key={`${ti}-${r}`}
               d={arc({ innerRadius: r0, outerRadius: r1, startAngle: a0, endAngle: a1 }) || ""}
               transform={`translate(${cx},${cy})`}
-              fill={vsupColor(r + 0.5, tier.cir)}
+              fill={GetColor(r + 0.5, tier.cir)}
               stroke="white"
               strokeWidth="0.5"
             />
@@ -86,59 +64,43 @@ export default function VSUPLegend() {
         })
       )}
 
-      {/* Rating tick labels */}
-      {ratingTicks.map((v) => {
+      {RatingTicks.map((v) => {
         const { x, y } = pt(outerRadius + 12, angleDeg(v))
         return (
-          <text key={v} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#555">
-            {v}
-          </text>
+          <g key={v}>
+            <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#555">{v}</text>
+          </g>
         )
       })}
 
-      {/* CIR boundary labels */}
-      {cirBoundaries.map(({ r, label }) => {
+      {CirBoundaries.map(({ r, label, note }) => {
         const { x, y } = pt(r, cirLabelAngle)
         return (
-          <text key={label} x={x + 4} y={y + 10} textAnchor="start" dominantBaseline="middle" fontSize="8" fill="#555">
-            {label}
-          </text>
+          <g key={label}>
+            <text x={x + 4} y={y + 10} textAnchor="start" dominantBaseline="middle" fontSize="8" fill="#555">{label}</text>
+          </g>
         )
       })}
 
-      {/* CIR axis label */}
       {(() => {
-        const midR = (innerRadius + outerRadius) / 2
         const { x, y } = pt(midR, cirLabelAngle)
         return (
-          <text
-            transform={`translate(${x + 22}, ${y + 20}) rotate(-30)`}
-            textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#666"
-          >
+          <text transform={`translate(${x + 22}, ${y + 20}) rotate(-30)`} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#666">
             95% Credible Interval Range (CIR)
           </text>
         )
       })()}
 
-      {/* Divider */}
-      <line
-        x1={16} y1={legendY - 14}
-        x2={width - 16} y2={legendY - 14}
-        stroke="#ddd" strokeWidth="0.5"
-      />
+      <line x1={16} y1={legendY - 14} x2={width - 16} y2={legendY - 14} stroke="#ddd" strokeWidth="0.5" />
 
-      {/* Legend title */}
       <text x={16} y={legendY} fontSize="9" fontWeight="600" fill="#444">
-        How to read this chart
+        Examples
       </text>
 
-      {/* Legend items */}
-      {legendItems.map(({ color, label }, i) => (
+      {LegendItems.map(({ color, label }, i) => (
         <g key={i} transform={`translate(16, ${legendY + 18 + i * 22})`}>
           <rect width={swatchSize} height={swatchSize} rx="2" fill={color} />
-          <text x={swatchSize + 6} y={swatchSize / 2} dominantBaseline="middle" fontSize="8.5" fill="#555">
-            {label}
-          </text>
+          <text x={swatchSize + 6} y={swatchSize / 2} dominantBaseline="middle" fontSize="8.5" fill="#555">{label}</text>
         </g>
       ))}
 

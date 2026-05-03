@@ -1,19 +1,17 @@
-import { NEIGHBOURHOOD_NAMES } from "../../utils/constants"
+import { NEIGHBOURHOODS } from "../../utils/constants"
 
 export default function Controls({
   locations,
-  selectedLocation,
-  setSelectedLocation,
-  sortMode,
-  setSortMode,
+  Location,
+  setLocation,
+  sort,
+  setSort,
   fillMap,
   setFillMap,
   showNames,
   setShowNames,
-  isPlaying,
-  setIsPlaying,
-  palette,
-  setPalette
+  Play,
+  setPlay,
 }) {
   return (
     <div className="px-4 py-2.5 mb-3 grid items-center gap-30"
@@ -34,22 +32,22 @@ export default function Controls({
       {/* Center: play + neighbourhood */}
       <div className="flex items-center gap-2 justify-center">
         <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className={`h-8 px-3.5 rounded-lg text-sm font-bold cursor-pointer whitespace-nowrap border ${isPlaying
+          onClick={() => setPlay(!Play)}
+          className={`h-8 px-3.5 rounded-lg text-sm font-bold cursor-pointer whitespace-nowrap border ${Play
             ? "bg-white border-gray-300 text-gray-700"
             : "bg-sky-400 border-sky-400 text-white"
             }`}
         >
-          {isPlaying ? "|| Pause" : "Play ▶"}
+          {Play ? "|| Pause" : "Play ▶"}
         </button>
         <select
-          value={selectedLocation}
-          onChange={(e) => setSelectedLocation(Number(e.target.value))}
+          value={Location}
+          onChange={(e) => setLocation(Number(e.target.value))}
           className="h-8 border border-gray-300 rounded-lg px-2.5 bg-white text-gray-700 text-xs"
         >
           {locations.map((loc) => (
             <option key={loc} value={loc}>
-              {loc} {NEIGHBOURHOOD_NAMES[loc]}
+              {loc} {NEIGHBOURHOODS[loc]}
             </option>
           ))}
         </select>
@@ -59,8 +57,8 @@ export default function Controls({
       <div className="flex items-center gap-2 flex-nowrap">
         <span className="text-[11px] text-slate-400 whitespace-nowrap">Sort options</span>
         <select
-          value={sortMode}
-          onChange={(e) => setSortMode(e.target.value)}
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
           className="h-8 border border-gray-300 rounded-lg px-2 bg-white text-gray-700 text-xs"
         >
           <option value="ci95">95% CI lower bound</option>

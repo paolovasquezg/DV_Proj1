@@ -1,4 +1,4 @@
-export const mapShapes = [
+export const CountyShapes = [
   { id: 1, c: [75, 90], p: [[20, 70], [65, 45], [110, 55], [115, 125], [70, 150], [25, 130]] },
   { id: 2, c: [155, 85], p: [[110, 55], [200, 45], [220, 105], [185, 155], [115, 125]] },
   { id: 3, c: [270, 85], p: [[200, 45], [310, 20], [350, 75], [330, 160], [220, 105]] },
@@ -20,6 +20,6 @@ export const mapShapes = [
   { id: 19, c: [265, 225], p: [[200, 190], [285, 210], [200, 235], [185, 155]] }
 ]
 
-export function polygonPath(points) {
+export function CountyForm(points) {
   return `M${points.map((p) => p.join(",")).join("L")}Z`
 }
