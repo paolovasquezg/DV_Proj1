@@ -14,14 +14,15 @@ export const ratingColor = d3
   )
 
 export function vsupColor(rating, cir) {
-  if (!Number.isFinite(rating)) return "#e2e7e9"
+  if (!Number.isFinite(rating)) return "#c8c8c8"
 
   const r = Math.max(0, Math.min(10, rating))
+  // CIR ranges 0–10: 0 = full color, 10 = full gray
   const c = Number.isFinite(cir) ? Math.max(0, Math.min(10, cir)) : 10
   const base = ratingColor(r)
-  const uncertainty = Math.min(0.75, c / 10)
+  const uncertainty = c / 10
 
-  return d3.interpolateLab(base, "#dfe5e7")(uncertainty)
+  return d3.interpolateLab(base, "#c8c8c8")(uncertainty)
 }
 
 export function statusFromAge(ageMinutes) {

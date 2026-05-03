@@ -57,12 +57,8 @@ export default function HeatMap({
   const cellWidth = hours.length > 1 ? Math.max(2, x(new Date(hours[1])) - x(new Date(hours[0]))) : 6
 
   return (
-    <svg className="panel" viewBox={`0 0 ${width} ${height}`}>
-      <rect width={width} height={height} fill="#fbfbfb" />
-
-      <text x={margin.left} y="15" fontSize="12" fontWeight="700">
-        Heat Map
-      </text>
+    <svg className="block rounded-xl overflow-hidden" viewBox={`0 0 ${width} ${height}`}>
+      <rect width={width} height={height} fill="white" />
 
       {categories.map((category) => {
         const selected = category === selectedCategory

@@ -1,5 +1,5 @@
 {
-  "name": "vast-mc1-react",
+  "name": "mc1-2019-dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.4",
     "d3": "^7.9.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "tailwindcss": "^4.2.4",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

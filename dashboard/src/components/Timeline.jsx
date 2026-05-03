@@ -11,34 +11,27 @@ export default function Timeline({
 
   useEffect(() => {
     if (!isPlaying || times.length === 0) return
-
     const id = setInterval(() => {
       setSelectedTimeIndex((current) => {
         if (current >= times.length - 1) return 0
         return current + 1
       })
     }, 450)
-
     return () => clearInterval(id)
   }, [isPlaying, times.length, setSelectedTimeIndex])
 
   return (
-    <div className="timeline-card">
-      <div className="timeline-main">
-        <button className="play-button" onClick={() => setIsPlaying(!isPlaying)}>
-          {isPlaying ? "Pause" : "Play"}
-        </button>
-
+    <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2.5 mb-2.5 shadow-sm">
+      <div className="flex items-center gap-3.5">
         <input
-          className="timeline-range"
           type="range"
           min="0"
           max={Math.max(0, times.length - 1)}
           value={selectedTimeIndex}
           onChange={(e) => setSelectedTimeIndex(Number(e.target.value))}
+          className="flex-1 cursor-pointer"
         />
-
-        <div className="timeline-date">
+        <div className="text-xs font-semibold text-gray-700 whitespace-nowrap min-w-[190px] text-right">
           {selectedTime ? selectedTime.toLocaleString() : ""}
         </div>
       </div>

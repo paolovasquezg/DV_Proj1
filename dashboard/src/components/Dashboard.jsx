@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { loadMc1Excel } from "../utils/loadExcel"
-import { CATEGORY_LABELS, LOCATIONS, NEIGHBOURHOOD_NAMES } from "../utils/constants"
+import { CATEGORY_LABELS, CATEGORY_ORDER, LOCATIONS, NEIGHBOURHOOD_NAMES } from "../utils/constants"
 import { getCategories, getTimes, latestRowsFor } from "../utils/selectors"
 import Controls from "./Controls"
 import Timeline from "./Timeline"
@@ -20,32 +20,25 @@ export default function Dashboard() {
   const [fillMap, setFillMap] = useState(true)
   const [showNames, setShowNames] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [palette, setPalette] = useState("vsup")
 
   useEffect(() => {
     loadMc1Excel()
-      .then((rows) => {
-        setData(rows)
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error(error)
-        setLoading(false)
-      })
+      .then((rows) => { setData(rows); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const times = useMemo(() => getTimes(data), [data])
   const categories = useMemo(() => getCategories(data), [data])
 
   useEffect(() => {
-    if (times.length > 0 && selectedTimeIndex === 0) {
+    if (times.length > 0 && selectedTimeIndex === 0)
       setSelectedTimeIndex(Math.floor(times.length * 0.65))
-    }
   }, [times, selectedTimeIndex])
 
   useEffect(() => {
-    if (categories.length > 0 && !categories.includes(selectedCategory)) {
+    if (categories.length > 0 && !categories.includes(selectedCategory))
       setSelectedCategory(categories[0])
-    }
   }, [categories, selectedCategory])
 
   const selectedTime = times[selectedTimeIndex]
@@ -55,57 +48,17 @@ export default function Dashboard() {
     return latestRowsFor(data, selectedCategory, selectedTime)
   }, [data, selectedCategory, selectedTime])
 
-  const selectedRow = currentRows.find((d) => d.location === selectedLocation)
+  if (loading) return <div className="p-10 text-center text-sm text-gray-500">Loading MC1 dashboard...</div>
+  if (!data.length) return <div className="p-10 text-center text-sm text-gray-500">No data loaded.</div>
 
-  if (loading) {
-    return <div className="loading">Loading MC1 dashboard...</div>
-  }
-
-  if (!data.length) {
-    return <div className="loading">No data loaded.</div>
-  }
+  const orderedCategories = CATEGORY_ORDER.filter((c) => categories.includes(c))
 
   return (
-    <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div>
-          <h1>VAST Challenge 2019 MC1 Simulation</h1>
-          <p>BSTS MAP, credible intervals and CIR visualization using React + D3.</p>
-        </div>
-      </header>
+    <div className="max-w-[1380px] mx-auto px-5 py-4">
 
-      <Controls
-        categories={categories}
-        locations={LOCATIONS}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        selectedLocation={selectedLocation}
-        setSelectedLocation={setSelectedLocation}
-        sortMode={sortMode}
-        setSortMode={setSortMode}
-        fillMap={fillMap}
-        setFillMap={setFillMap}
-        showNames={showNames}
-        setShowNames={setShowNames}
-      />
-
-      <Timeline
-        times={times}
-        selectedTimeIndex={selectedTimeIndex}
-        setSelectedTimeIndex={setSelectedTimeIndex}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-      />
-
-      <main className="dashboard-grid">
-        <section className="panel-card">
-          <div className="panel-title">
-            <div>
-              <h2>Map with Choropleth and Circle Marks</h2>
-              <span>{CATEGORY_LABELS[selectedCategory]}</span>
-            </div>
-          </div>
-
+      {/* ── Top: map (left) + category buttons + error bar chart (right) ── */}
+      <div className="grid gap-3 mb-2.5 items-start" style={{ gridTemplateColumns: "minmax(480px, 540px) 1fr" }}>
+        <section className="flex items-center justify-center">
           <ChoroplethMap
             rows={currentRows}
             selectedLocation={selectedLocation}
@@ -115,56 +68,60 @@ export default function Dashboard() {
           />
         </section>
 
-        <section className="panel-card">
-          <div className="panel-title">
-            <div>
-              <h2>Error Bar Chart</h2>
-              <span>MAP + 50/80/95% credible intervals</span>
-            </div>
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
+            {orderedCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`h-8 border rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap ${selectedCategory === cat
+                  ? "bg-sky-400 border-sky-400 text-white"
+                  : "bg-white border-gray-300 text-slate-600 hover:bg-slate-50"
+                  }`}
+              >
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
           </div>
-
           <ErrorBarChart
             rows={currentRows}
             selectedLocation={selectedLocation}
+            setSelectedLocation={setSelectedLocation}
             sortMode={sortMode}
           />
-        </section>
-      </main>
-
-      <section className="middle-grid">
-        <div className="info-card">
-          <span>Neighbourhood:</span>
-          <strong>{selectedLocation} {NEIGHBOURHOOD_NAMES[selectedLocation]}</strong>
-
-          <div className="info-metrics">
-            <div>
-              <span>Category</span>
-              <b>{CATEGORY_LABELS[selectedCategory]}</b>
-            </div>
-
-            <div>
-              <span>Time</span>
-              <b>{selectedTime ? selectedTime.toLocaleString() : ""}</b>
-            </div>
-
-            <div>
-              <span>MAP</span>
-              <b>{Number.isFinite(selectedRow?.map) ? selectedRow.map.toFixed(2) : "No data"}</b>
-            </div>
-
-            <div>
-              <span>95% CIR</span>
-              <b>{Number.isFinite(selectedRow?.cir) ? selectedRow.cir.toFixed(2) : "No data"}</b>
-            </div>
-          </div>
-
-          <p>
-            The heat map displays hourly aggregated MAP values and their uncertainty.
-            The line charts show the progression of MAP values and credible intervals over time.
-          </p>
         </div>
+      </div>
 
-        <section className="panel-card">
+      {/* ── Timeline ── */}
+      <Timeline
+        times={times}
+        selectedTimeIndex={selectedTimeIndex}
+        setSelectedTimeIndex={setSelectedTimeIndex}
+        isPlaying={isPlaying}
+        setIsPlaying={setIsPlaying}
+      />
+
+      {/* ── Controls ── */}
+      <Controls
+        locations={LOCATIONS}
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
+        sortMode={sortMode}
+        setSortMode={setSortMode}
+        fillMap={fillMap}
+        setFillMap={setFillMap}
+        showNames={showNames}
+        setShowNames={setShowNames}
+        isPlaying={isPlaying}
+        setIsPlaying={setIsPlaying}
+        palette={palette}
+        setPalette={setPalette}
+      />
+
+      {/* ── Bottom: heatmap + linecharts (left) | vsup legend (right) ── */}
+      <div className="grid gap-3 items-start" style={{ gridTemplateColumns: "3fr 2fr" }}>
+
+        <div className="flex flex-col gap-3">
           <HeatMap
             data={data}
             selectedLocation={selectedLocation}
@@ -172,22 +129,22 @@ export default function Dashboard() {
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
           />
-        </section>
 
-        <section className="panel-card">
-          <VSUPLegend />
-        </section>
-      </section>
+          <div className="overflow-y-auto max-h-[300px]">
+            <LineCharts
+              data={data}
+              selectedLocation={selectedLocation}
+              selectedTime={selectedTime}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
+          </div>
+        </div>
 
-      <section className="panel-card line-section">
-        <LineCharts
-          data={data}
-          selectedLocation={selectedLocation}
-          selectedTime={selectedTime}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-        />
-      </section>
+        <VSUPLegend />
+
+      </div>
+
     </div>
   )
 }

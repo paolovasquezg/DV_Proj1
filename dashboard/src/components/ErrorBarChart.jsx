@@ -3,10 +3,10 @@ import * as d3 from "d3"
 import { NEIGHBOURHOOD_NAMES } from "../utils/constants"
 import { statusColor, vsupColor } from "../utils/vsup"
 
-export default function ErrorBarChart({ rows, selectedLocation, sortMode }) {
+export default function ErrorBarChart({ rows, selectedLocation, setSelectedLocation, sortMode }) {
   const width = 650
   const height = 470
-  const margin = { top: 58, right: 28, bottom: 28, left: 70 }
+  const margin = { top: 58, right: 28, bottom: 28, left: 110 }
 
   const sortedRows = useMemo(() => {
     const clean = rows.filter((d) => Number.isFinite(d.map))
@@ -23,12 +23,8 @@ export default function ErrorBarChart({ rows, selectedLocation, sortMode }) {
   const y = d3.scaleBand().domain(sortedRows.map((d) => d.location)).range([margin.top, height - margin.bottom]).padding(0.32)
 
   return (
-    <svg className="panel" viewBox={`0 0 ${width} ${height}`}>
-      <rect width={width} height={height} fill="#fbfbfb" />
-
-      <text x={margin.left} y={18} fontSize="12" fontWeight="700">
-        Rating
-      </text>
+    <svg className="w-full block rounded-xl overflow-hidden" viewBox={`0 0 ${width} ${height}`}>
+      <rect width={width} height={height} fill="white" />
 
       {d3.range(0, 10, 0.25).map((v) => (
         <rect
@@ -50,18 +46,15 @@ export default function ErrorBarChart({ rows, selectedLocation, sortMode }) {
         </g>
       ))}
 
-      <text x={14} y={margin.top - 8} fontSize="11" fontWeight="700" transform={`rotate(-90 14 ${margin.top - 8})`}>
-        Neighbourhood
-      </text>
 
       {sortedRows.map((d) => {
         const cy = y(d.location) + y.bandwidth() / 2
         const selected = d.location === selectedLocation
 
         return (
-          <g key={d.location}>
-            <text x={margin.left - 12} y={cy + 4} textAnchor="end" fontSize="10" fill="#444">
-              {d.location}
+          <g key={d.location} onClick={() => setSelectedLocation(d.location)} style={{ cursor: "pointer" }}>
+            <text x={margin.left - 12} y={cy + 4} textAnchor="end" fontSize="10" fill={selected ? "#222" : "#444"} fontWeight={selected ? "700" : "400"}>
+              {NEIGHBOURHOOD_NAMES[d.location] ?? d.location}
             </text>
 
             <line
@@ -103,32 +96,9 @@ export default function ErrorBarChart({ rows, selectedLocation, sortMode }) {
               strokeWidth="3"
             />
 
-            {selected && (
-              <text x={x(d.map) + 12} y={cy + 4} fontSize="11" fontWeight="700" fill="#555">
-                {NEIGHBOURHOOD_NAMES[d.location]}
-              </text>
-            )}
           </g>
         )
       })}
-
-      <g transform={`translate(${width - 95}, 60)`}>
-        <text x="0" y="0" fontSize="11" fontWeight="700">
-          95% CIR
-        </text>
-        <text x="0" y="18" fontSize="10" fill="#555">
-          0 - 1.25
-        </text>
-        <text x="0" y="34" fontSize="10" fill="#555">
-          1.25 - 2.50
-        </text>
-        <text x="0" y="50" fontSize="10" fill="#555">
-          2.50 - 5.00
-        </text>
-        <text x="0" y="66" fontSize="10" fill="#555">
-          &gt; 5.00
-        </text>
-      </g>
     </svg>
   )
 }

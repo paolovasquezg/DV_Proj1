@@ -86,8 +86,8 @@ export default function LineCharts({
     .y1((d) => y(clampRating(d.ci50_hi)))
 
   return (
-    <svg className="panel" viewBox={`0 0 ${width} ${height}`}>
-      <rect width={width} height={height} fill="#fbfbfb" />
+    <svg className="w-full block rounded-xl overflow-hidden" viewBox={`0 0 ${width} ${height}`}>
+      <rect width={width} height={height} fill="white" />
 
       <text x={margin.left} y="13" fontSize="12" fontWeight="700">
         Line Charts
