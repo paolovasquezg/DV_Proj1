@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { loadMc1Excel } from "../utils/loadExcel"
+import { loadMc1Excel } from "../utils/excel"
 import { CATEGORY_LABELS, CATEGORY_ORDER, LOCATIONS, NEIGHBOURHOOD_NAMES } from "../utils/constants"
 import { getCategories, getTimes, latestRowsFor } from "../utils/selectors"
 import Controls from "./others/controls"
@@ -8,7 +8,7 @@ import ErrorBarChart from "./graphs/barchart"
 import ChoroplethMap from "./graphs/map"
 import HeatMap from "./graphs/heatmap"
 import LineCharts from "./graphs/lines"
-import VSUPLegend from "./others/VSUPLegend"
+import VSUPLegend from "./others/legend"
 
 export default function Dashboard() {
   const [data, setData] = useState([])

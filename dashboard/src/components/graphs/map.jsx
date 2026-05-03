@@ -1,4 +1,4 @@
-import { mapShapes, polygonPath } from "../../utils/mapShapes"
+import { mapShapes, polygonPath } from "../../utils/shapes"
 import { NEIGHBOURHOOD_NAMES } from "../../utils/constants"
 import { statusColor, vsupColor } from "../../utils/vsup"
 
