@@ -17,7 +17,7 @@ LOCATIONS  = sorted(data["location"].unique())
 
 
 # ── 2. Aggregate (location, category, 5-min bin) ────────────
-# Summarize all equal pairs (location, category) to a single value (mean) -> MAP
+# Summarize all equal triplets (location, category, time-bin) to a single value (mean) -> MAP
 
 print("Stage 2/4 — Aggregating to 5-min bins...")
 
