@@ -1,24 +1,28 @@
-export const CountyShapes = [
-  { id: 1, c: [75, 90], p: [[20, 70], [65, 45], [110, 55], [115, 125], [70, 150], [25, 130]] },
-  { id: 2, c: [155, 85], p: [[110, 55], [200, 45], [220, 105], [185, 155], [115, 125]] },
-  { id: 3, c: [270, 85], p: [[200, 45], [310, 20], [350, 75], [330, 160], [220, 105]] },
-  { id: 4, c: [395, 130], p: [[350, 75], [440, 45], [500, 100], [470, 185], [370, 170], [330, 160]] },
-  { id: 5, c: [150, 210], p: [[70, 150], [185, 155], [200, 235], [135, 280], [55, 235]] },
-  { id: 6, c: [155, 150], p: [[115, 125], [185, 155], [70, 150], [110, 55]] },
-  { id: 7, c: [525, 215], p: [[500, 130], [555, 105], [580, 145], [575, 300], [520, 300], [505, 220]] },
-  { id: 8, c: [470, 335], p: [[435, 300], [520, 300], [500, 365], [420, 365]] },
-  { id: 9, c: [285, 315], p: [[200, 235], [370, 260], [370, 365], [220, 370], [135, 280]] },
-  { id: 10, c: [395, 285], p: [[370, 260], [435, 260], [435, 340], [370, 365]] },
-  { id: 11, c: [470, 275], p: [[435, 260], [520, 250], [520, 300], [435, 340]] },
-  { id: 12, c: [480, 210], p: [[470, 185], [520, 185], [520, 250], [435, 260], [435, 210]] },
-  { id: 13, c: [395, 220], p: [[370, 170], [470, 185], [435, 260], [370, 260]] },
-  { id: 14, c: [275, 160], p: [[220, 105], [330, 160], [285, 210], [200, 190]] },
-  { id: 15, c: [215, 145], p: [[185, 155], [220, 105], [240, 165], [200, 190]] },
-  { id: 16, c: [215, 205], p: [[185, 155], [200, 190], [285, 210], [200, 235]] },
-  { id: 17, c: [325, 250], p: [[285, 210], [370, 170], [370, 260], [200, 235]] },
-  { id: 18, c: [325, 205], p: [[330, 160], [370, 170], [370, 260], [285, 210]] },
-  { id: 19, c: [265, 225], p: [[200, 190], [285, 210], [200, 235], [185, 155]] }
-]
+import coords from "../data/counties.geo.json"
+import { scaleLinear } from "d3-scale"
+import { extent } from "d3-array"
+
+const WIDTH = 550
+const HEIGHT = 400
+
+const all_coords = coords.features.flatMap((f) => f.geometry.coordinates[0])
+
+const xScale = scaleLinear().domain(extent(all_coords, (p) => p[0])).range([0, WIDTH])
+
+const yScale = scaleLinear().domain(extent(all_coords, (p) => p[1])).range([HEIGHT, 0])
+
+function normalize([x, y]) { return [xScale(x), yScale(y)] }
+
+export const CountyShapes = coords.features.map((f) => {
+
+  const points = f.geometry.coordinates[0].map(normalize)
+
+  const cx = points.reduce((a, p) => a + p[0], 0) / points.length
+
+  const cy = points.reduce((a, p) => a + p[1], 0) / points.length
+
+  return { id: f.properties.loc, name: f.properties.locName, c: [cx, cy], p: points }
+})
 
 export function CountyForm(points) {
   return `M${points.map((p) => p.join(",")).join("L")}Z`
