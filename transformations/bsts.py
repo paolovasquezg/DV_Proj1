@@ -1,51 +1,77 @@
+# bsts.py
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.statespace.structural import UnobservedComponents
+import pymc as pm
+from scipy.stats import gaussian_kde
+
 
 def BSTS(location, category, location_category_data):
 
     time_series = (location_category_data.set_index("time_bin")["value"].sort_index().dropna())
 
-    num_observations = len(time_series)
-    
-    if num_observations < 5:
+    if len(time_series) < 5:
         return None
 
-    ratings = time_series.values.astype(float)
+    HDI_LEVELS = [0.50, 0.80, 0.90, 0.95]
+    NKEEP = 200
+    BURN  = 100
 
-    prior_mean = float(ratings[0])
-    prior_std  = 0.1 * float(np.std(ratings)) if np.std(ratings) > 0 else 1e-4
-    prior_var  = prior_std ** 2
+    ratings   = time_series.values.astype(float)
+    time_bins = time_series.index
+    n         = len(ratings)
 
-    try:
-        model = UnobservedComponents(ratings, level="local level")
-        model.initialize_known(initial_state=np.array([prior_mean]), initial_state_cov=np.array([[prior_var]]))
-        fitted_model = model.fit(method="lbfgs", disp=False, maxiter=200,)
-    except:
-        return None
-
-    filtered_mean = fitted_model.filtered_state[0]
-    filtered_var  = fitted_model.filtered_state_cov[0, 0]
-    filtered_std  = np.sqrt(np.maximum(filtered_var, 0))
-
-    confidence_intervals = {"50": 0.6745, "80": 1.2816, "95": 1.9600}
+    def hdi(samples, prob):
+        sorted_s   = np.sort(samples)
+        n_s        = len(sorted_s)
+        n_included = int(np.floor(prob * n_s))
+        widths     = sorted_s[n_included:] - sorted_s[:n_s - n_included]
+        idx        = int(np.argmin(widths))
+        return float(sorted_s[idx]), float(sorted_s[idx + n_included])
 
     output_rows = []
-    for i, time_bin in enumerate(time_series.index):
-        estimated_mean = filtered_mean[i]
-        estimated_std  = filtered_std[i]
-        row = {"time_bin": time_bin, "location": location, "category": category, "map": round(float(estimated_mean), 4)}
-        
-        for confidence_level, z_score in confidence_intervals.items():
-            lower_bound = float(estimated_mean - z_score * estimated_std)
-            upper_bound = float(estimated_mean + z_score * estimated_std)
-            row[f"ci{confidence_level}_lo"] = round(lower_bound, 4)
-            row[f"ci{confidence_level}_hi"] = round(upper_bound, 4)
 
-        lower_bound_95_clipped = max(row["ci95_lo"], 0.0)
-        upper_bound_95_clipped = min(row["ci95_hi"], 10.0)
-        row["cir"] = round(max(upper_bound_95_clipped - lower_bound_95_clipped, 0.0), 4)
+    for t in range(n):
+        y_obs = ratings[: t + 1]
+        T     = len(y_obs)
+
+        with pm.Model():
+            sigma_level = pm.HalfNormal("sigma_level", sigma=1.0)
+
+            mu0 = pm.Normal("mu0", mu=np.log(np.clip(y_obs[0], 0.1, None)), sigma=1.0)
+
+            if T > 1:
+                innovations = pm.Normal("innovations", mu=0, sigma=sigma_level, shape=T - 1)
+                log_mu = pm.Deterministic("log_mu", pm.math.concatenate([mu0[None], mu0 + pm.math.cumsum(innovations)]))
+            else:
+                log_mu = pm.Deterministic("log_mu", mu0[None])
+
+            pm.Poisson("y", mu=pm.math.exp(log_mu), observed=y_obs)
+
+            trace = pm.sample(draws=NKEEP, tune=BURN, chains=1, progressbar=False, random_seed=0, target_accept=0.9, return_inferencedata=True)
+
+        posterior_last = np.exp(trace.posterior["log_mu"].values[0, :, -1])
+
+        kde     = gaussian_kde(posterior_last)
+        grid    = np.linspace(posterior_last.min(), posterior_last.max(), 1000)
+        map_val = float(grid[np.argmax(kde(grid))])
+
+        row = {"time_bin": time_bins[t], "location": location, "category": category,
+                "map": round(map_val,4), "mean": round(float(posterior_last.mean()), 4)}
+
+        for prob in HDI_LEVELS:
+            lo, hi = hdi(posterior_last, prob)
+            key = str(int(prob * 100))
+            row[f"ci{key}_lo"] = round(lo, 4)
+            row[f"ci{key}_hi"] = round(hi, 4)
+
+        hi95, lo95 = row["ci95_hi"], row["ci95_lo"]
+        row["cir"] = round((10 - lo95) if hi95 > 10 else (hi95 - lo95), 4)
 
         output_rows.append(row)
 
     return pd.DataFrame(output_rows)
+
+
+def run_pair(args):
+    (location, category), group = args
+    return BSTS(location, category, group[["time_bin", "value"]])
