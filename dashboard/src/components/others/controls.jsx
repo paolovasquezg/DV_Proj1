@@ -61,9 +61,9 @@ export default function Controls({
           onChange={(e) => setSort(e.target.value)}
           className="h-8 border border-gray-300 rounded-lg px-2 bg-white text-gray-700 text-xs"
         >
-          <option value="ci95">95% CI lower bound</option>
-          <option value="map">Rating MAP</option>
-          <option value="cir">95% CIR</option>
+          <option value="ci95">CI lower bound</option>
+          <option value="map">MAP</option>
+          <option value="cir">CIR</option>
           <option value="location">Neighbourhood</option>
         </select>
       </div>
