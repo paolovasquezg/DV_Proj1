@@ -26,4 +26,4 @@ npm install
 npm run dev
 ```
 
-Open the local URL: `http://localhost:5173`.
+Open the local URL too see the dashboard: `http://localhost:5173`.
