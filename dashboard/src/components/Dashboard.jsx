@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { load_excel } from "../utils/excel"
 
 import { LABELS, ORDER, LOCATIONS } from "../utils/constants"
-import { GetTimes, GetLatestRegs } from "../utils/selectors"
+import { GetTimes, GetLatestRegs, GetAllCategoryRegs } from "../utils/selectors"
 
 import BarChart from "./graphs/barchart"
 import MainMap from "./graphs/map"
@@ -24,12 +24,20 @@ export default function Dashboard() {
   const [Category, setCategory] = useState("shake_intensity")
 
   const [fillMap, setFillMap] = useState(true)
+  const [showAllCategories, setShowAllCategories] = useState(false)
+  const [showHighlight, setShowHighlight] = useState(true)
   const [showNames, setShowNames] = useState(false)
+  const [showHospitals, setShowHospitals] = useState(false)
+  const [palette, setPalette] = useState("vsup")
   const [Play, setPlay] = useState(false)
 
   const times = useMemo(() => GetTimes(data), [data])
   const Time = times[TimeIndex]
-  const Regs = useMemo(() => { return GetLatestRegs(data, Category, Time) }, [data, Category, Time])
+
+  const Regs = useMemo(() => GetLatestRegs(data, Category, Time), [data, Category, Time])
+  const AllRegs = useMemo(() => showAllCategories ? GetAllCategoryRegs(data, Time) : null, [data, Time, showAllCategories])
+
+  const MapRegs = showAllCategories && AllRegs ? AllRegs : Regs
 
   useEffect(() => { load_excel().then((rows) => { setData(rows); setLoading(false) }).catch(() => setLoading(false)) }, [])
   useEffect(() => { if (times.length > 0 && TimeIndex === 0) setTimeIndex(Math.floor(times.length * 0.65)) }, [times, TimeIndex])
@@ -42,11 +50,14 @@ export default function Dashboard() {
       <div className="grid gap-3 mb-2.5 items-start" style={{ gridTemplateColumns: "minmax(480px, 540px) 1fr" }}>
         <section className="flex items-center justify-center">
           <MainMap
-            Regs={Regs}
+            Regs={MapRegs}
             Location={Location}
             setLocation={setLocation}
             fillMap={fillMap}
-            showNames={showNames} />
+            showNames={showNames}
+            showHighlight={showHighlight}
+            showHospitals={showHospitals}
+            palette={palette} />
         </section>
 
         <div className="flex flex-col gap-2">
@@ -55,7 +66,7 @@ export default function Dashboard() {
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`h-8 border rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap 
+                className={`h-8 border rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap
                   ${Category === cat ? "bg-sky-400 border-sky-400 text-white" : "bg-white border-gray-300 text-slate-600 hover:bg-slate-50"}`}>
                 {LABELS[cat]}
               </button>
@@ -65,7 +76,9 @@ export default function Dashboard() {
             regs={Regs}
             Location={Location}
             setLocation={setLocation}
-            sort={sort} />
+            sort={sort}
+            showHighlight={showHighlight}
+            palette={palette} />
         </div>
       </div>
 
@@ -83,14 +96,20 @@ export default function Dashboard() {
         setSort={setSort}
         fillMap={fillMap}
         setFillMap={setFillMap}
+        showAllCategories={showAllCategories}
+        setShowAllCategories={setShowAllCategories}
+        showHighlight={showHighlight}
+        setShowHighlight={setShowHighlight}
         showNames={showNames}
         setShowNames={setShowNames}
+        showHospitals={showHospitals}
+        setShowHospitals={setShowHospitals}
+        palette={palette}
+        setPalette={setPalette}
         Play={Play}
         setPlay={setPlay} />
 
-
       <div className="grid gap-3 items-start" style={{ gridTemplateColumns: "3fr 2fr" }}>
-
         <div className="flex flex-col gap-3">
           <HeatMap
             data={data}
@@ -109,10 +128,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <Legend />
-
+        <Legend palette={palette} />
       </div>
-
     </div>
   )
 }

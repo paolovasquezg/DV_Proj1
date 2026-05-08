@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import * as d3 from "d3"
 import { LABELS, ORDER } from "../../utils/constants"
-import { GetColor } from "../../utils/vsup"
+import { GetColorPalette } from "../../utils/vsup"
 
 export default function HeatMap({ data, Location, Time, Category, setCategory }) {
 
@@ -59,7 +59,7 @@ export default function HeatMap({ data, Location, Time, Category, setCategory })
       })}
 
       {Cells.map((d, index) => (
-        <rect key={`${+d.hour}-${d.category}-${index}`} x={x(d.hour)} y={y(d.category)} width={cellWidth} height={y.bandwidth()} fill={GetColor(d.map, d.cir)}>
+        <rect key={`${+d.hour}-${d.category}-${index}`} x={x(d.hour)} y={y(d.category)} width={cellWidth} height={y.bandwidth()} fill={GetColorPalette(d.map, d.cir, "vsup")}>
           <title>
             {`${LABELS[d.category] ?? d.category} ${d.hour.toLocaleString()} MAP: ${d.map?.toFixed?.(2)} CIR: ${d.cir?.toFixed?.(2)}`}
           </title>

@@ -1,8 +1,21 @@
 import { CountyShapes, CountyForm } from "../../utils/shapes"
 import { NEIGHBOURHOODS } from "../../utils/constants"
-import { StatusColor, GetColor } from "../../utils/vsup"
+import { StatusColor, GetColorPalette } from "../../utils/vsup"
+import countiesInfo from "../../data/counties_info.json"
 
-export default function MainMap({ Regs, Location, setLocation, fillMap, showNames }) {
+const hospitalIDs = new Set(countiesInfo.filter((c) => c.hospital).map((c) => c.locID))
+const nuclearIDs = new Set(countiesInfo.filter((c) => c.power.includes("Nuclear")).map((c) => c.locID))
+
+export default function MainMap({
+  Regs,
+  Location,
+  setLocation,
+  fillMap,
+  showNames,
+  showHighlight = true,
+  showHospitals = false,
+  palette = "vsup",
+}) {
   const width = 610
   const height = 560
   const ByLocation = new Map(Regs.map((d) => [d.location, d]))
@@ -15,17 +28,18 @@ export default function MainMap({ Regs, Location, setLocation, fillMap, showName
         {CountyShapes.map((shape) => {
           const reg = ByLocation.get(shape.id)
           const selected = shape.id === Location
+          const highlighted = selected && showHighlight
 
           return (
             <g key={shape.id} onClick={() => setLocation(shape.id)} style={{ cursor: "pointer" }}>
               <path
                 d={CountyForm(shape.p)}
-                fill={selected ? "#f4a77d" : fillMap ? GetColor(reg?.map, reg?.cir) : "#dce5e8"}
-                stroke={selected ? "#555" : "#aab5ba"}
-                strokeWidth={selected ? 2 : 0.8}
+                fill={highlighted ? "#f4a77d" : fillMap ? GetColorPalette(reg?.map, reg?.cir, palette) : "#dce5e8"}
+                stroke={highlighted ? "#555" : "#aab5ba"}
+                strokeWidth={highlighted ? 2 : 0.8}
                 strokeDasharray={reg?.status === "missing" ? "2 2" : ""}
               />
-              <circle cx={shape.c[0]} cy={shape.c[1]} r={selected ? 11 : 9} fill="none" stroke={StatusColor[reg?.status ?? "missing"]} strokeWidth="4" />
+              <circle cx={shape.c[0]} cy={shape.c[1]} r={highlighted ? 11 : 9} fill="none" stroke={StatusColor[reg?.status ?? "missing"]} strokeWidth="4" />
               <circle cx={shape.c[0]} cy={shape.c[1]} r="4" fill="#ffffff" />
               <text x={shape.c[0]} y={shape.c[1] - 16} textAnchor="middle" fontSize="10" fontWeight="700" fill="#333">
                 {shape.id}
@@ -38,7 +52,25 @@ export default function MainMap({ Regs, Location, setLocation, fillMap, showName
             </g>
           )
         })}
+
+        {showHospitals && CountyShapes.map((shape) => (
+          <g key={`overlay-${shape.id}`} style={{ pointerEvents: "none" }}>
+            {hospitalIDs.has(shape.id) && (
+              <g transform={`translate(${shape.c[0] + 13}, ${shape.c[1] - 13})`}>
+                <rect x={-7} y={-7} width={14} height={14} rx="2" fill="#c0392b" />
+                <text x={0} y={4} textAnchor="middle" fontSize="9" fontWeight="800" fill="white">H</text>
+              </g>
+            )}
+            {nuclearIDs.has(shape.id) && (
+              <g transform={`translate(${shape.c[0] - 13}, ${shape.c[1] - 13})`}>
+                <circle r="7" fill="#f39c12" />
+                <text x={0} y={3.5} textAnchor="middle" fontSize="9" fill="#333">☢</text>
+              </g>
+            )}
+          </g>
+        ))}
       </g>
+
 
       <g transform="translate(42,450)">
         <circle cx="0" cy="0" r="8" fill="none" stroke={StatusColor.fresh} strokeWidth="4" />
@@ -50,6 +82,20 @@ export default function MainMap({ Regs, Location, setLocation, fillMap, showName
         <circle cx="0" cy="48" r="8" fill="none" stroke={StatusColor.missing} strokeWidth="4" />
         <text x="18" y="52" fontSize="10" fill="#666">Missing data over 1 hour</text>
       </g>
+
+      {showHospitals && (
+        <g transform="translate(42,528)">
+          <rect x={-7} y={-7} width={14} height={14} rx="2" fill="#c0392b" />
+          <text x={0} y={4} textAnchor="middle" fontSize="9" fontWeight="800" fill="white">H</text>
+          <text x="18" y="4" fontSize="10" fill="#666">Hospital</text>
+
+          <g transform="translate(100, 0)">
+            <circle r="7" fill="#f39c12" />
+            <text x={0} y={3.5} textAnchor="middle" fontSize="9" fill="#333">☢</text>
+            <text x="14" y="4" fontSize="10" fill="#666">Nuclear plant</text>
+          </g>
+        </g>
+      )}
 
       <g transform="translate(475,480)">
         <line x1="0" x2="70" y1="0" y2="0" stroke="#aaa" strokeWidth="2" />

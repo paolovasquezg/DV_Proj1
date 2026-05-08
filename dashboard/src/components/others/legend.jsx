@@ -1,7 +1,7 @@
 import * as d3 from "d3"
-import { GetColor } from "../../utils/vsup"
+import { GetColorPalette } from "../../utils/vsup"
 
-export default function Legend() {
+export default function Legend({ palette = palette }) {
 
   const toRad = (deg) => (deg * Math.PI) / 180
   const pt = (r, deg) => ({ x: cx + r * Math.sin(toRad(deg)), y: cy - r * Math.cos(toRad(deg)) })
@@ -34,9 +34,9 @@ export default function Legend() {
   const swatchSize = 10
 
   const LegendItems = [
-    { color: GetColor(8.5, 1.25), label: "High rating, low uncertainty" },
-    { color: GetColor(5, 10), label: "High uncertainty" },
-    { color: GetColor(1.5, 1.25), label: "Low rating, low uncertainty" }]
+    { color: GetColorPalette(8.5, 1.25, palette), label: "High rating, low uncertainty" },
+    { color: GetColorPalette(5, 10, palette), label: "High uncertainty" },
+    { color: GetColorPalette(1.5, 1.25, palette), label: "Low rating, low uncertainty" }]
 
   return (
     <svg className="w-full max-w-md block" viewBox={`0 0 ${width} ${height}`}>
@@ -56,7 +56,7 @@ export default function Legend() {
               key={`${ti}-${r}`}
               d={arc({ innerRadius: r0, outerRadius: r1, startAngle: a0, endAngle: a1 }) || ""}
               transform={`translate(${cx},${cy})`}
-              fill={GetColor(r + 0.5, tier.cir)}
+              fill={GetColorPalette(r + 0.5, tier.cir, palette)}
               stroke="white"
               strokeWidth="0.5"
             />

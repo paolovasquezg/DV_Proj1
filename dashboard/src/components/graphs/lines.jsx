@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { LABELS, ORDER } from "../../utils/constants"
-import { GetColor } from "../../utils/vsup"
+import { GetColorPalette } from "../../utils/vsup"
 import * as d3 from "d3"
 
 export default function Lines({ data, Location, Time, Category, setCategory }) {
@@ -70,13 +70,13 @@ export default function Lines({ data, Location, Time, Category, setCategory }) {
             <path d={area50(rows)} fill="#9aa5aa" opacity="0.55" />
 
             {simulatedDots(rows).map((dot) => (
-              <circle key={dot.id} cx={x(dot.time)} cy={y(dot.value)} r="1.4" fill={GetColor(dot.map, dot.cir)} opacity="0.55" />
+              <circle key={dot.id} cx={x(dot.time)} cy={y(dot.value)} r="1.4" fill={GetColorPalette(dot.map, dot.cir, "vsup")} opacity="0.55" />
             ))}
 
             <path d={line(rows)} fill="none" stroke={selected ? "#242424" : "#757f84"} strokeWidth={selected ? 2 : 1.2} />
 
             {rows.filter((_, i) => i % 14 === 0).map((d, i) => (
-              <circle key={`${category}-${+d.time}-${i}`} cx={x(d.time)} cy={y(Rating(d.map))} r={selected ? 2.3 : 1.7} fill={GetColor(d.map, d.cir)} stroke="#fff" strokeWidth="0.5" />
+              <circle key={`${category}-${+d.time}-${i}`} cx={x(d.time)} cy={y(Rating(d.map))} r={selected ? 2.3 : 1.7} fill={GetColorPalette(d.map, d.cir, "vsup")} stroke="#fff" strokeWidth="0.5" />
             ))}
 
             {Time && <line x1={x(Time)} x2={x(Time)} y1="8" y2={rowHeight - 15} stroke="#222" strokeWidth="1.3" />}
